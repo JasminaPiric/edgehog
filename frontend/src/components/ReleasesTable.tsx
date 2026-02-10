@@ -44,7 +44,7 @@ import InfiniteTable from "./InfiniteTable";
 import { RECORDS_TO_LOAD_FIRST, RECORDS_TO_LOAD_NEXT } from "@/constants";
 
 // We use graphql fields below in columns configuration
-/* eslint-disable relay/unused-fields */
+
 const RELEASES_TABLE_FRAGMENT = graphql`
   fragment ReleasesTable_ReleaseFragment on Application
   @refetchable(queryName: "ReleasesTable_PaginationQuery")
@@ -170,7 +170,7 @@ const ReleasesTable = ({
         },
       });
     },
-    [deleteRelease],
+    [deleteRelease, setErrorFeedback, setShowDeleteModal],
   );
 
   const { data, loadNext, hasNext, isLoadingNext, refetch } =

@@ -32,7 +32,7 @@ import "./Sidebar.scss";
 
 type SidebarItemProps = {
   icon?: React.ComponentProps<typeof Icon>["icon"];
-  label: JSX.Element;
+  label: React.ReactElement;
   activeRoutes?: Route | Route[];
 } & ParametricRoute;
 

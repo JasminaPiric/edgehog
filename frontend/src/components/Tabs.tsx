@@ -108,12 +108,15 @@ const Tabs = ({
     return sortedEventKeys.map((eventKey) => tabRefsByEventKey[eventKey]);
   }, [tabRefs, tabsOrder]);
 
-  useEffect(() => {
+  // Set state during render instead of in an effect to avoid cascading renders
+  const [prevSortedTabRefs, setPrevSortedTabRefs] = useState(sortedTabRefs);
+  if (sortedTabRefs !== prevSortedTabRefs) {
+    setPrevSortedTabRefs(sortedTabRefs);
     if (!activeKey && sortedTabRefs.length > 0) {
       const fallback = defaultActiveKey ?? sortedTabRefs[0].eventKey;
       setActiveKey(fallback);
     }
-  }, [activeKey, defaultActiveKey, sortedTabRefs]);
+  }
 
   return (
     <TabsContext.Provider value={contextValue}>

@@ -89,7 +89,6 @@ const UpdateTargetsTabs = ({ campaignRef }: Props) => {
   const [activeTab, setActiveTab] =
     useState<CampaignTargetStatusType>("SUCCESSFUL");
   const [committedTab, setCommittedTab] = useState(activeTab);
-  const [isTabDataLoading, setIsTabDataLoading] = useState(false);
 
   const { data, loadNext, hasNext, isLoadingNext, refetch } =
     usePaginationFragment<
@@ -97,8 +96,14 @@ const UpdateTargetsTabs = ({ campaignRef }: Props) => {
       UpdateTargetsTabs_UpdateTargetsFragment$key
     >(UPDATE_TARGETS_FRAGMENT, campaignRef);
 
+  // Derive loading state from comparing active vs committed tab
+  const isTabDataLoading = activeTab !== committedTab;
+
   useEffect(() => {
-    setIsTabDataLoading(true);
+    // Only refetch if the tab has actually changed
+    if (activeTab === committedTab) {
+      return;
+    }
 
     refetch(
       {
@@ -109,11 +114,10 @@ const UpdateTargetsTabs = ({ campaignRef }: Props) => {
         fetchPolicy: "network-only",
         onComplete: () => {
           setCommittedTab(activeTab);
-          setIsTabDataLoading(false);
         },
       },
     );
-  }, [activeTab, refetch]);
+  }, [activeTab, committedTab, refetch]);
 
   const loadNextUpdateTargets = useCallback(() => {
     if (hasNext && !isLoadingNext) {

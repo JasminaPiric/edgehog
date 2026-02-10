@@ -119,15 +119,14 @@ const AddAvailableApplications = ({
       { fetchPolicy: "store-and-network" },
     );
 
+  const applicationEdges = data.applications?.edges ?? [];
   const applicationOptions: SelectOption[] = useMemo(() => {
-    if (!data.applications?.edges) return [];
-
-    return data.applications.edges.map((app) => ({
+    return applicationEdges.map((app) => ({
       value: app.node.id,
       label: app.node.name,
       disabled: false,
     }));
-  }, [data.applications?.edges]);
+  }, [applicationEdges]);
 
   const selectedApplicationOption = useMemo(() => {
     return (
@@ -136,9 +135,9 @@ const AddAvailableApplications = ({
   }, [applicationOptions, selectedApp]);
 
   const releaseOptions: SelectOption[] = useMemo(() => {
-    if (!selectedApp || !data.applications?.edges) return [];
+    if (!selectedApp || !applicationEdges) return [];
 
-    const selectedApplication = data.applications.edges.find(
+    const selectedApplication = applicationEdges.find(
       (app) => app.node.id === selectedApp,
     );
 
@@ -160,7 +159,7 @@ const AddAvailableApplications = ({
         disabled: !enabled,
       };
     });
-  }, [selectedApp, data.applications?.edges, systemModelName]);
+  }, [selectedApp, applicationEdges, systemModelName]);
 
   const selectedReleaseOption = useMemo(() => {
     return (

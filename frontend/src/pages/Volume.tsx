@@ -121,7 +121,7 @@ const VolumeContent = ({ volume }: VolumeContentProps) => {
         return JSON.stringify(JSON.parse(volume.options), null, 2);
       }
       return JSON.stringify(volume.options, null, 2);
-    } catch (err) {
+    } catch {
       setErrorFeedback("Failed to parse volume options JSON.");
       return "";
     }

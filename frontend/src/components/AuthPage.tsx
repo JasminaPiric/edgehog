@@ -26,7 +26,7 @@ import assets from "@/assets";
 import "./AuthPage.scss";
 
 type AuthPageProps = {
-  children: JSX.Element | JSX.Element[];
+  children: React.ReactElement | React.ReactElement[];
 };
 
 const AuthPage = ({ children }: AuthPageProps) => {

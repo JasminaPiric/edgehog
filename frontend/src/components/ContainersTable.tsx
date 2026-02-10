@@ -156,7 +156,7 @@ const formatJson = (jsonString: unknown) => {
       return JSON.stringify(JSON.parse(jsonString), null, 2);
     }
     return JSON.stringify(jsonString, null, 2);
-  } catch (err) {
+  } catch {
     return "";
   }
 };

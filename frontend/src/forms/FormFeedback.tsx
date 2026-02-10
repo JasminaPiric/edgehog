@@ -66,7 +66,7 @@ const FormFeedback = ({ feedback }: Props) => {
   const { messageId, values } = parsedFeedback;
   return (
     <Form.Control.Feedback type="invalid">
-      <FormattedMessage id={messageId} values={values} />
+      <FormattedMessage id={messageId} values={values as any} />
     </Form.Control.Feedback>
   );
 };

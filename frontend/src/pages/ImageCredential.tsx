@@ -45,6 +45,7 @@ import Spinner from "@/components/Spinner";
 import UpdateImageCredentialForm from "@/forms/UpdateImageCredential";
 import { Link, Route, useNavigate } from "@/Navigation";
 
+ 
 const IMAGE_CREDENTIAL_QUERY = graphql`
   query ImageCredential_imageCredential_Query($imageCredentialId: ID!) {
     imageCredentials(id: $imageCredentialId) {

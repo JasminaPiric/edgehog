@@ -39,7 +39,7 @@ import I18nProvider from "@/i18n";
 
 // relay-test-utils expect to have a jest global https://github.com/facebook/relay/issues/4228
 declare global {
-  /* eslint-disable no-var */
+   
   var jest: typeof vi;
 }
 globalThis.jest = vi;

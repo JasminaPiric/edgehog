@@ -22,6 +22,7 @@ import { it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 import TablePagination from "./TablePagination";
+import userEvent from "@testing-library/user-event";
 
 it("renders correctly", () => {
   const pageChangeHandler = vi.fn();
@@ -128,7 +129,7 @@ it("shows there are more pages available", () => {
   expect(screen.queryByTestId("pagination-last")).not.toBeInTheDocument();
 });
 
-it("correctly notifies page index on change", () => {
+it("correctly notifies page index on change", async () => {
   const pageChangeHandler = vi.fn();
   render(
     <TablePagination
@@ -137,11 +138,16 @@ it("correctly notifies page index on change", () => {
       onPageChange={pageChangeHandler}
     />,
   );
-  screen.getByTestId("pagination-item-16").click();
+
+  const user = userEvent.setup();
+
+  await user.click(screen.getByTestId("pagination-item-16"));
   expect(pageChangeHandler).toHaveBeenCalledWith(16);
-  screen.getByTestId("pagination-first").click();
+
+  await user.click(screen.getByTestId("pagination-first"));
   expect(pageChangeHandler).toHaveBeenCalledWith(0);
-  screen.getByTestId("pagination-last").click();
+
+  await user.click(screen.getByTestId("pagination-last"));
   expect(pageChangeHandler).toHaveBeenCalledWith(29);
 });
 

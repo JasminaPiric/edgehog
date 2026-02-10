@@ -200,7 +200,7 @@ const ApplicationsTable = ({
         },
       });
     },
-    [deleteApplication],
+    [deleteApplication, setErrorFeedback],
   );
 
   const columnHelper = createColumnHelper<TableRecord>();

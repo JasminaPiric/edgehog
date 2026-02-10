@@ -586,7 +586,7 @@ const DeviceContent = ({
         });
       },
     });
-  }, []);
+  }, [addDeviceTags, deviceId, handleAPIErrors, refreshTags]);
 
   const handleRemoveDeviceTags = useCallback((tags: string[]) => {
     removeDeviceTags({
@@ -639,7 +639,7 @@ const DeviceContent = ({
         });
       },
     });
-  }, []);
+  }, [deviceId, removeDeviceTags, handleAPIErrors]);
 
   const handleTagsChange = useCallback(
     (updatedTags: string[]) => {
@@ -658,7 +658,7 @@ const DeviceContent = ({
         handleRemoveDeviceTags(tagsToBeRemoved);
       }
     },
-    [deviceTags],
+    [deviceTags, handleAddDeviceTags, handleRemoveDeviceTags],
   );
 
   const [getBaseImageCollsQuery, getBaseImageColls] =

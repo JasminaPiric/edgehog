@@ -18,7 +18,7 @@
   SPDX-License-Identifier: Apache-2.0
 */
 
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import RBFigure from "react-bootstrap/Figure";
 
 const placeholderImage =
@@ -32,14 +32,17 @@ interface Props {
 
 const Figure = ({ alt, className = "", src }: Props) => {
   const [imageSrc, setImageSrc] = useState(src || placeholderImage);
+  const [prevSrc, setPrevSrc] = useState(src);
+
+  // Update imageSrc during render when src prop changes
+  if (src !== prevSrc) {
+    setPrevSrc(src);
+    setImageSrc(src || placeholderImage);
+  }
 
   const handleError = useCallback(() => {
     setImageSrc(placeholderImage);
   }, []);
-
-  useEffect(() => {
-    setImageSrc(src || placeholderImage);
-  }, [src]);
 
   return (
     <RBFigure className={"w-100 " + className}>

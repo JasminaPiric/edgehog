@@ -57,9 +57,9 @@ const TablePagination = ({
     startPage = 0;
   }
 
-  const items = [];
-  for (let pageIndex = startPage; pageIndex <= endPage; pageIndex += 1) {
-    items.push(
+  const items = Array.from({ length: endPage - startPage + 1 }, (_, index) => {
+    const pageIndex = startPage + index;
+    return (
       <Pagination.Item
         data-testid={`pagination-item-${pageIndex}`}
         className="border-0"
@@ -70,9 +70,9 @@ const TablePagination = ({
         }}
       >
         {pageIndex + 1}
-      </Pagination.Item>,
+      </Pagination.Item>
     );
-  }
+  });
 
   return (
     <Pagination className="justify-content-center border-0">

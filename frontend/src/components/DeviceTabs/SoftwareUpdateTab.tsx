@@ -27,12 +27,9 @@ import {
   fetchQuery,
   useRelayEnvironment,
   usePaginationFragment,
-  usePreloadedQuery,
-  PreloadedQuery,
 } from "react-relay/hooks";
 import { Form, Stack } from "react-bootstrap";
 
-import type { Device_getBaseImageCollections_Query } from "@/api/__generated__/Device_getBaseImageCollections_Query.graphql";
 import { SoftwareUpdateTab_createManualOtaOperation_Mutation } from "@/api/__generated__/SoftwareUpdateTab_createManualOtaOperation_Mutation.graphql";
 import type { SoftwareUpdateTab_PaginationQuery } from "@/api/__generated__/SoftwareUpdateTab_PaginationQuery.graphql";
 import type { SoftwareUpdateTab_otaOperations$key } from "@/api/__generated__/SoftwareUpdateTab_otaOperations.graphql";
@@ -43,7 +40,6 @@ import Spinner from "@/components/Spinner";
 import { Tab } from "@/components/Tabs";
 import ManualOtaFromCollectionForm from "@/forms/ManualOtaFromCollectionForm";
 import ManualOtaFromFileForm from "@/forms/ManualOtaFromFileForm";
-import { GET_BASE_IMAGE_COLL_QUERY } from "@/pages/Device";
 
 const DEVICE_OTA_OPERATIONS_FRAGMENT = graphql`
   fragment SoftwareUpdateTab_otaOperations on Device
@@ -96,11 +92,6 @@ const DEVICE_CREATE_MANUAL_OTA_OPERATION_MUTATION = graphql`
   }
 `;
 
-export type GetBaseImageCollsQueryType = PreloadedQuery<
-  Device_getBaseImageCollections_Query,
-  Record<string, unknown>
->;
-
 type OtaOperationInput = {
   imageFile?: File;
   imageUrl?: string;
@@ -108,12 +99,10 @@ type OtaOperationInput = {
 
 type DeviceSoftwareUpdateTabProps = {
   deviceRef: SoftwareUpdateTab_otaOperations$key;
-  getBaseImageCollsQuery: GetBaseImageCollsQueryType;
 };
 
 const DeviceSoftwareUpdateTab = ({
   deviceRef,
-  getBaseImageCollsQuery,
 }: DeviceSoftwareUpdateTabProps) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [errorFeedback, setErrorFeedback] = useState<React.ReactNode>(null);
@@ -208,11 +197,6 @@ const DeviceSoftwareUpdateTab = ({
     deviceId,
   ]);
 
-  const baseImageCollections = usePreloadedQuery(
-    GET_BASE_IMAGE_COLL_QUERY,
-    getBaseImageCollsQuery,
-  );
-
   if (!data.capabilities.includes("SOFTWARE_UPDATES")) {
     return null;
   }
@@ -287,44 +271,43 @@ const DeviceSoftwareUpdateTab = ({
         >
           {errorFeedback}
         </Alert>
-        <Suspense fallback={<Spinner />}>
-          <Stack direction="vertical" className="mt-3">
-            <Form.Group key="updateMode">
-              <Form.Check
-                name="updateMode"
-                inline
-                type="radio"
-                label="Collection"
-                id="Collection"
-                onChange={modeOnChange("collection")}
-                checked={updateMode === "collection"}
-              />
-              <Form.Check
-                name="updateMode"
-                inline
-                type="radio"
-                label="File"
-                id="File"
-                onChange={modeOnChange("file")}
-                checked={updateMode === "file"}
-              />
-            </Form.Group>
-            {updateMode === "collection" ? (
+        <Stack direction="vertical" className="mt-3">
+          <Form.Group key="updateMode">
+            <Form.Check
+              name="updateMode"
+              inline
+              type="radio"
+              label="Collection"
+              id="Collection"
+              onChange={modeOnChange("collection")}
+              checked={updateMode === "collection"}
+            />
+            <Form.Check
+              name="updateMode"
+              inline
+              type="radio"
+              label="File"
+              id="File"
+              onChange={modeOnChange("file")}
+              checked={updateMode === "file"}
+            />
+          </Form.Group>
+          {updateMode === "collection" ? (
+            <Suspense fallback={<Spinner size="sm" className="mt-3" />}>
               <ManualOtaFromCollectionForm
-                baseImageCollectionsData={baseImageCollections}
                 className="mt-3 w-75"
                 isLoading={isCreatingOtaOperation}
                 onManualOTAImageSubmit={launchManualOTAUpdate}
               />
-            ) : (
-              <ManualOtaFromFileForm
-                className="mt-3 w-75"
-                isLoading={isCreatingOtaOperation}
-                onManualOTAImageSubmit={launchManualOTAUpdate}
-              />
-            )}
-          </Stack>
-        </Suspense>
+            </Suspense>
+          ) : (
+            <ManualOtaFromFileForm
+              className="mt-3 w-75"
+              isLoading={isCreatingOtaOperation}
+              onManualOTAImageSubmit={launchManualOTAUpdate}
+            />
+          )}
+        </Stack>
         {currentOperation && (
           <div className="mt-3">
             <FormattedMessage

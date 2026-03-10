@@ -21,12 +21,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 import { Controller, useForm } from "react-hook-form";
-import { graphql, usePaginationFragment } from "react-relay";
+import { graphql, usePaginationFragment, useLazyLoadQuery } from "react-relay";
 import _ from "lodash";
 import Select from "react-select";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import type { ManualOtaFromCollectionForm_BaseImageCollectionsPagination_Query } from "@/api/__generated__/ManualOtaFromCollectionForm_BaseImageCollectionsPagination_Query.graphql";
+import type { ManualOtaFromCollectionForm_getBaseImageCollections_Query } from "@/api/__generated__/ManualOtaFromCollectionForm_getBaseImageCollections_Query.graphql";
 import type {
   ManualOtaFromCollectionForm_baseImageCollections_Fragment$data,
   ManualOtaFromCollectionForm_baseImageCollections_Fragment$key,
@@ -41,6 +42,17 @@ import Stack from "@/components/Stack";
 import { RECORDS_TO_LOAD_FIRST, RECORDS_TO_LOAD_NEXT } from "@/constants";
 import { manualOtaFromCollectionSchema } from "@/forms/validation";
 import { ManualOtaFromCollectionData } from "@/forms/validation";
+
+const GET_BASE_IMAGE_COLLECTIONS_QUERY = graphql`
+  query ManualOtaFromCollectionForm_getBaseImageCollections_Query(
+    $first: Int
+    $after: String
+    $filter: BaseImageCollectionFilterInput
+  ) {
+    ...ManualOtaFromCollectionForm_baseImageCollections_Fragment
+      @arguments(filter: $filter)
+  }
+`;
 
 const BASE_IMAGE_COLLECTIONS_FRAGMENT = graphql`
   fragment ManualOtaFromCollectionForm_baseImageCollections_Fragment on RootQueryType
@@ -68,7 +80,6 @@ type BaseImageCollectionRecord = NonNullable<
 
 type FromCollectionFormProps = {
   className?: string;
-  baseImageCollectionsData?: ManualOtaFromCollectionForm_baseImageCollections_Fragment$key;
   isLoading: boolean;
   onManualOTAImageSubmit: ManualOtaOperation;
 };
@@ -91,12 +102,18 @@ const fromCollectionInitialData: ManualOtaFromCollectionData = {
 };
 
 const ManualOtaFromCollectionForm = ({
-  baseImageCollectionsData,
   className,
   isLoading,
   onManualOTAImageSubmit,
 }: FromCollectionFormProps) => {
   const intl = useIntl();
+
+  const queryData =
+    useLazyLoadQuery<ManualOtaFromCollectionForm_getBaseImageCollections_Query>(
+      GET_BASE_IMAGE_COLLECTIONS_QUERY,
+      { first: RECORDS_TO_LOAD_FIRST },
+      { fetchPolicy: "store-and-network" },
+    );
 
   const {
     control,
@@ -122,7 +139,7 @@ const ManualOtaFromCollectionForm = ({
   } = usePaginationFragment<
     ManualOtaFromCollectionForm_BaseImageCollectionsPagination_Query,
     ManualOtaFromCollectionForm_baseImageCollections_Fragment$key
-  >(BASE_IMAGE_COLLECTIONS_FRAGMENT, baseImageCollectionsData);
+  >(BASE_IMAGE_COLLECTIONS_FRAGMENT, queryData);
 
   const [searchBaseImageCollText, setSearchBaseImageCollText] = useState<
     string | null

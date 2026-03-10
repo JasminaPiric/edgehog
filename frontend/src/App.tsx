@@ -75,7 +75,7 @@ import { bugs, repository, version } from "../package.json";
 
 type RouterRule = {
   path: string;
-  element: JSX.Element;
+  element: React.ReactElement;
 };
 
 const publicRoutes: RouterRule[] = [

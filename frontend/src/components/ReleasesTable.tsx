@@ -35,7 +35,7 @@ import { createColumnHelper } from "@/components/Table";
 import InfiniteTable from "./InfiniteTable";
 
 // We use graphql fields below in columns configuration
-/* eslint-disable relay/unused-fields */
+
 const RELEASES_TABLE_FRAGMENT = graphql`
   fragment ReleasesTable_ReleaseEdgeFragment on ReleaseConnection {
     edges {

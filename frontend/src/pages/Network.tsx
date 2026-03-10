@@ -123,7 +123,7 @@ const NetworkContent = ({ network }: NetworkContentProps) => {
         return JSON.stringify(JSON.parse(network.options), null, 2);
       }
       return JSON.stringify(network.options, null, 2);
-    } catch (err) {
+    } catch {
       setErrorFeedback("Failed to parse network options JSON.");
       return "";
     }

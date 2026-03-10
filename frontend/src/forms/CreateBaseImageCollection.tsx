@@ -186,7 +186,7 @@ const CreateBaseImageCollectionForm = ({
       const model2Used = isSystemModelUsedByOtherBaseImageCollection(model2);
       return Number(model1Used) - Number(model2Used);
     });
-  }, [systemModels]);
+  }, [systemModels, isSystemModelUsedByOtherBaseImageCollection]);
 
   const getSystemModelLabel = useCallback(
     (systemModel: SystemModelRecord) => {
@@ -213,7 +213,7 @@ const CreateBaseImageCollectionForm = ({
         return systemModel.name;
       }
     },
-    [intl],
+    [intl, baseImageCollections],
   );
   const getSystemModelValue = (systemModel: SystemModelRecord) =>
     systemModel.id;

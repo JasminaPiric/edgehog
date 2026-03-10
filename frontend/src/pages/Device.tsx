@@ -24,6 +24,7 @@ import React, {
   useEffect,
   useState,
   useMemo,
+  useRef,
 } from "react";
 import { useParams } from "react-router-dom";
 import { ErrorBoundary } from "react-error-boundary";
@@ -82,8 +83,6 @@ import DeviceWiFiScanResultsTab from "@/components/DeviceTabs/WiFiScanResultsTab
 import DeviceSoftwareUpdateTab from "@/components/DeviceTabs/SoftwareUpdateTab";
 import DeviceFilesUploadTab from "@/components/DeviceTabs/FilesUploadTab";
 import DeviceApplicationsTab from "@/components/DeviceTabs/ApplicationsTab";
-import { Device_getBaseImageCollections_Query } from "@/api/__generated__/Device_getBaseImageCollections_Query.graphql";
-import { RECORDS_TO_LOAD_FIRST } from "@/constants";
 
 const DEVICE_CONNECTION_STATUS_FRAGMENT = graphql`
   fragment Device_connectionStatus on Device {
@@ -239,17 +238,6 @@ const GET_FORWARDER_SESSION_QUERY = graphql`
       forwarderHostname
       forwarderPort
     }
-  }
-`;
-
-export const GET_BASE_IMAGE_COLL_QUERY = graphql`
-  query Device_getBaseImageCollections_Query(
-    $first: Int
-    $after: String
-    $filterBaseImageCollections: BaseImageCollectionFilterInput = {}
-  ) {
-    ...ManualOtaFromCollectionForm_baseImageCollections_Fragment
-      @arguments(filter: $filterBaseImageCollections)
   }
 `;
 
@@ -535,113 +523,119 @@ const DeviceContent = ({
     [deviceTags],
   );
 
-  const handleAddDeviceTags = useCallback((tags: string[]) => {
-    addDeviceTags({
-      variables: {
-        deviceId,
-        input: { tags },
-      },
-      onCompleted(data, errors) {
-        if (errors) {
-          handleAPIErrors(errors);
-          return;
-        }
-        // TODO refresh tags only when adding unexisting tags
-        refreshTags();
-      },
-      updater(store, data) {
-        if (!data?.addDeviceTags?.result) {
-          return;
-        }
-
-        const root = store.getRoot();
-        const deviceGroups = root.getLinkedRecords("deviceGroups");
-        if (!deviceGroups) {
-          return;
-        }
-
-        const device = store
-          .getRootField("addDeviceTags")
-          .getLinkedRecord("result");
-        const deviceId = device.getDataID();
-
-        const linkedGroups = new Set(
-          device
-            .getLinkedRecords("deviceGroups")
-            ?.map((deviceGroup) => deviceGroup.getDataID()),
-        );
-
-        deviceGroups.forEach((deviceGroup) => {
-          const devices = deviceGroup.getLinkedRecords("devices");
-          if (!devices) {
+  const handleAddDeviceTags = useCallback(
+    (tags: string[]) => {
+      addDeviceTags({
+        variables: {
+          deviceId,
+          input: { tags },
+        },
+        onCompleted(data, errors) {
+          if (errors) {
+            handleAPIErrors(errors);
             return;
           }
-          if (!linkedGroups.has(deviceGroup.getDataID())) {
-            return deviceGroup.setLinkedRecords(
-              devices.filter((device) => device.getDataID() !== deviceId),
-              "devices",
-            );
-          }
-          if (!devices.some((device) => device.getDataID() === deviceId)) {
-            deviceGroup.setLinkedRecords([...devices, device], "devices");
-          }
-        });
-      },
-    });
-  }, []);
-
-  const handleRemoveDeviceTags = useCallback((tags: string[]) => {
-    removeDeviceTags({
-      variables: {
-        deviceId,
-        input: { tags },
-      },
-      onCompleted(data, errors) {
-        if (errors) {
-          handleAPIErrors(errors);
-          return;
-        }
-      },
-      updater(store, data) {
-        if (!data?.removeDeviceTags?.result) {
-          return;
-        }
-
-        const root = store.getRoot();
-        const deviceGroups = root.getLinkedRecords("deviceGroups");
-        if (!deviceGroups) {
-          return;
-        }
-
-        const device = store
-          .getRootField("removeDeviceTags")
-          .getLinkedRecord("result");
-        const deviceId = device.getDataID();
-
-        const linkedGroups = new Set(
-          device
-            .getLinkedRecords("deviceGroups")
-            ?.map((deviceGroup) => deviceGroup.getDataID()),
-        );
-
-        deviceGroups.forEach((deviceGroup) => {
-          const devices = deviceGroup.getLinkedRecords("devices");
-          if (!devices) {
+          // TODO refresh tags only when adding unexisting tags
+          refreshTags();
+        },
+        updater(store, data) {
+          if (!data?.addDeviceTags?.result) {
             return;
           }
-          if (!linkedGroups.has(deviceGroup.getDataID())) {
-            return deviceGroup.setLinkedRecords(
-              devices.filter((device) => device.getDataID() !== deviceId),
-              "devices",
-            );
+
+          const root = store.getRoot();
+          const deviceGroups = root.getLinkedRecords("deviceGroups");
+          if (!deviceGroups) {
+            return;
           }
-          if (!devices.some((device) => device.getDataID() === deviceId)) {
-            deviceGroup.setLinkedRecords([...devices, device], "devices");
+
+          const device = store
+            .getRootField("addDeviceTags")
+            .getLinkedRecord("result");
+          const deviceId = device.getDataID();
+
+          const linkedGroups = new Set(
+            device
+              .getLinkedRecords("deviceGroups")
+              ?.map((deviceGroup) => deviceGroup.getDataID()),
+          );
+
+          deviceGroups.forEach((deviceGroup) => {
+            const devices = deviceGroup.getLinkedRecords("devices");
+            if (!devices) {
+              return;
+            }
+            if (!linkedGroups.has(deviceGroup.getDataID())) {
+              return deviceGroup.setLinkedRecords(
+                devices.filter((device) => device.getDataID() !== deviceId),
+                "devices",
+              );
+            }
+            if (!devices.some((device) => device.getDataID() === deviceId)) {
+              deviceGroup.setLinkedRecords([...devices, device], "devices");
+            }
+          });
+        },
+      });
+    },
+    [addDeviceTags, deviceId, handleAPIErrors, refreshTags],
+  );
+
+  const handleRemoveDeviceTags = useCallback(
+    (tags: string[]) => {
+      removeDeviceTags({
+        variables: {
+          deviceId,
+          input: { tags },
+        },
+        onCompleted(data, errors) {
+          if (errors) {
+            handleAPIErrors(errors);
+            return;
           }
-        });
-      },
-    });
-  }, []);
+        },
+        updater(store, data) {
+          if (!data?.removeDeviceTags?.result) {
+            return;
+          }
+
+          const root = store.getRoot();
+          const deviceGroups = root.getLinkedRecords("deviceGroups");
+          if (!deviceGroups) {
+            return;
+          }
+
+          const device = store
+            .getRootField("removeDeviceTags")
+            .getLinkedRecord("result");
+          const deviceId = device.getDataID();
+
+          const linkedGroups = new Set(
+            device
+              .getLinkedRecords("deviceGroups")
+              ?.map((deviceGroup) => deviceGroup.getDataID()),
+          );
+
+          deviceGroups.forEach((deviceGroup) => {
+            const devices = deviceGroup.getLinkedRecords("devices");
+            if (!devices) {
+              return;
+            }
+            if (!linkedGroups.has(deviceGroup.getDataID())) {
+              return deviceGroup.setLinkedRecords(
+                devices.filter((device) => device.getDataID() !== deviceId),
+                "devices",
+              );
+            }
+            if (!devices.some((device) => device.getDataID() === deviceId)) {
+              deviceGroup.setLinkedRecords([...devices, device], "devices");
+            }
+          });
+        },
+      });
+    },
+    [deviceId, removeDeviceTags, handleAPIErrors],
+  );
 
   const handleTagsChange = useCallback(
     (updatedTags: string[]) => {
@@ -660,24 +654,8 @@ const DeviceContent = ({
         handleRemoveDeviceTags(tagsToBeRemoved);
       }
     },
-    [deviceTags],
+    [deviceTags, handleAddDeviceTags, handleRemoveDeviceTags],
   );
-
-  const [getBaseImageCollsQuery, getBaseImageColls] =
-    useQueryLoader<Device_getBaseImageCollections_Query>(
-      GET_BASE_IMAGE_COLL_QUERY,
-    );
-
-  const fetchBaseImageCollsQuery = useCallback(
-    () =>
-      getBaseImageColls(
-        { first: RECORDS_TO_LOAD_FIRST },
-        { fetchPolicy: "network-only" },
-      ),
-    [getBaseImageColls],
-  );
-
-  useEffect(fetchBaseImageCollsQuery, [fetchBaseImageCollsQuery]);
 
   if (!device) {
     return (
@@ -961,12 +939,7 @@ const DeviceContent = ({
             <DeviceNetworkInterfacesTab deviceRef={device} />
             <DeviceLocationTab deviceRef={device} />
             <DeviceWiFiScanResultsTab deviceRef={device} />
-            {getBaseImageCollsQuery && (
-              <DeviceSoftwareUpdateTab
-                deviceRef={device}
-                getBaseImageCollsQuery={getBaseImageCollsQuery}
-              />
-            )}
+            <DeviceSoftwareUpdateTab deviceRef={device} />
             <DeviceFilesUploadTab deviceRef={device} />
             <DeviceApplicationsTab deviceRef={deviceData} />
           </Tabs>
@@ -985,15 +958,18 @@ const DevicePage = () => {
   const [getTagsQuery, getTags] =
     useQueryLoader<Device_getExistingDeviceTags_Query>(GET_TAGS_QUERY);
 
-  const refreshTags = useCallback(
-    () => getTags({}, { fetchPolicy: "store-and-network" }),
-    [getTags],
-  );
+  const getTagsRef = useRef(getTags);
+  getTagsRef.current = getTags;
+
+  const refreshTags = useCallback(() => {
+    getTagsRef.current({}, { fetchPolicy: "store-and-network" });
+  }, []);
 
   useEffect(() => {
     getDevice({ id: deviceId, first: 10_000 });
-    refreshTags();
-  }, [getDevice, deviceId, refreshTags]);
+    getTags({}, { fetchPolicy: "store-and-network" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deviceId]);
 
   return (
     <Suspense

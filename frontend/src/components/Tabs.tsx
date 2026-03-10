@@ -65,42 +65,27 @@ const Tabs = ({
   defaultActiveKey,
   tabsOrder = [],
 }: TabsProps) => {
+  // We keep track of the user's explicit selection
   const [activeKey, setActiveKey] = useState<EventKey | undefined>(
     defaultActiveKey,
   );
   const [tabRefs, setTabRefs] = useState<TabRef[]>([]);
 
+  // SIMPLIFIED: Just add the tab to the list. Don't worry about activeKey here.
   const registerTab = useCallback((tabRef: TabRef) => {
     setTabRefs((refs) => _.uniqBy([...refs, tabRef], "eventKey"));
-    setActiveKey((activeKey) => activeKey ?? tabRef.eventKey);
   }, []);
 
+  // SIMPLIFIED: Just remove the tab. Auto-selection is handled by derived state below.
   const unregisterTab = useCallback((eventKey: EventKey) => {
-    setTabRefs((tabRefs) => {
-      const newTabRefs = tabRefs.filter(
-        (tabRef) => tabRef.eventKey !== eventKey,
-      );
-      setActiveKey((activeKey) =>
-        activeKey === eventKey ? newTabRefs[0]?.eventKey : activeKey,
-      );
-      return newTabRefs;
-    });
+    setTabRefs((tabRefs) =>
+      tabRefs.filter((tabRef) => tabRef.eventKey !== eventKey),
+    );
   }, []);
-
-  const contextValue = useMemo(
-    () => ({
-      activeKey,
-      registerTab,
-      unregisterTab,
-    }),
-    [activeKey, registerTab, unregisterTab],
-  );
 
   const sortedTabRefs = useMemo(() => {
     const tabRefsByEventKey = _.keyBy(tabRefs, "eventKey");
     const eventKeys = _.keys(tabRefsByEventKey);
-    // 1. intersect tabsOrder with eventKeys to pick eventKeys in the correct order
-    // 2. union the result with eventKeys to pick the remaining eventKeys
     const sortedEventKeys = _.union(
       _.intersection(tabsOrder, eventKeys),
       eventKeys,
@@ -108,12 +93,30 @@ const Tabs = ({
     return sortedEventKeys.map((eventKey) => tabRefsByEventKey[eventKey]);
   }, [tabRefs, tabsOrder]);
 
-  useEffect(() => {
-    if (!activeKey && sortedTabRefs.length > 0) {
-      const fallback = defaultActiveKey ?? sortedTabRefs[0].eventKey;
-      setActiveKey(fallback);
-    }
-  }, [activeKey, defaultActiveKey, sortedTabRefs]);
+  // DERIVED STATE: Calculate the actual active key during render.
+  // 1. Check if the current state `activeKey` is valid (exists in the sorted list).
+  const isCurrentKeyValid = sortedTabRefs.some(
+    (tab) => tab.eventKey === activeKey,
+  );
+
+  // 2. Determine the final key to display:
+  //    - If the state key is valid, use it.
+  //    - If not, try the default key (only if it's currently in the list? Optional, but safer).
+  //    - Finally, fallback to the first available tab.
+  const currentActiveKey = isCurrentKeyValid
+    ? activeKey
+    : sortedTabRefs.length > 0
+      ? sortedTabRefs[0].eventKey
+      : undefined;
+
+  const contextValue = useMemo(
+    () => ({
+      activeKey: currentActiveKey, // Pass the derived key to children
+      registerTab,
+      unregisterTab,
+    }),
+    [currentActiveKey, registerTab, unregisterTab],
+  );
 
   return (
     <TabsContext.Provider value={contextValue}>
@@ -125,7 +128,9 @@ const Tabs = ({
                 <NavLink
                   as="button"
                   type="button"
-                  active={activeKey === tabRef.eventKey}
+                  // Use derived key for visual state
+                  active={currentActiveKey === tabRef.eventKey}
+                  // Update state on click
                   onClick={() => setActiveKey(tabRef.eventKey)}
                 >
                   {tabRef.title}
@@ -163,6 +168,7 @@ const Tab = ({ children, className, eventKey, title }: TabProps) => {
     return () => unregisterTab(eventKey);
   }, [registerTab, unregisterTab, eventKey, title]);
 
+  // This relies on the derived key passed down from context
   const isActive = activeKey === eventKey;
 
   if (!isActive) {

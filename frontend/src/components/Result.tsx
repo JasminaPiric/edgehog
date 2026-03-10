@@ -23,7 +23,7 @@ import React from "react";
 interface Props {
   children?: React.ReactNode;
   image?: string;
-  title?: string | JSX.Element;
+  title?: string | React.ReactElement;
 }
 
 const ResultWrapper = ({ children, image, title }: Props) => {

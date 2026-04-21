@@ -1,7 +1,7 @@
 /*
  * This file is part of Edgehog.
  *
- * Copyright 2025 SECO Mind Srl
+ * Copyright 2025 - 2026 SECO Mind Srl
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useIntl } from "react-intl";
 import { Card, Button, Collapse } from "react-bootstrap";
 
@@ -50,23 +50,19 @@ export function useCollapsibleSections<T extends string | number>(
   return { openSections, toggleSection, isSectionOpen, setOpenSections };
 }
 
-interface CollapseCaretProps {
-  open: boolean;
-}
+type CollapseType = "flat" | "card-parent" | "card-child" | "list";
 
-const CollapseCaret = ({ open }: CollapseCaretProps) => {
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        transition: "transform 0.2s ease-in-out",
-        transform: open ? "rotate(0deg)" : "rotate(-180deg)",
-      }}
-    >
-      <Icon icon="caretDown" />
-    </span>
-  );
-};
+const CollapseCaret = ({ open }: { open: boolean }) => (
+  <span
+    style={{
+      display: "inline-flex",
+      transition: "transform 0.2s ease-in-out",
+      transform: open ? "rotate(0deg)" : "rotate(-180deg)",
+    }}
+  >
+    <Icon icon="caretDown" />
+  </span>
+);
 
 interface CollapseHeaderButtonProps {
   open: boolean;
@@ -96,15 +92,13 @@ const CollapseHeaderButton = ({
     {children}
   </Button>
 );
-
-type CollapseType = "flat" | "card-parent" | "card-child";
-
 interface CollapseItemProps {
   title: React.ReactNode;
   children: React.ReactNode;
   open: boolean;
   onToggle: () => void;
   containerStatus?: string | null;
+  rightContent?: React.ReactNode;
   isInsideTable?: boolean;
   type?: CollapseType;
 }
@@ -115,15 +109,29 @@ const CollapseItem = ({
   open,
   onToggle,
   containerStatus,
+  rightContent,
   isInsideTable = false,
   type = "card-child",
 }: CollapseItemProps) => {
   const intl = useIntl();
 
-  const isFlat = type === "flat";
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
   const isParent = type === "card-parent";
 
-  if (isFlat) {
+  const handleScrollIntoView = useCallback(() => {
+    if (!containerRef.current) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    if (rect.bottom > window.innerHeight) {
+      containerRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }
+  }, []);
+
+  if (type === "flat") {
     const collapseTitle = isInsideTable
       ? open
         ? intl.formatMessage({
@@ -141,6 +149,7 @@ const CollapseItem = ({
         className={
           !isInsideTable ? `mb-2 border-bottom ${open ? "pb-4" : "pb-1"}` : ""
         }
+        ref={containerRef}
       >
         <CollapseHeaderButton
           open={open}
@@ -155,15 +164,47 @@ const CollapseItem = ({
           </span>
         </CollapseHeaderButton>
 
-        <Collapse in={open}>
+        <Collapse in={open} onEntered={handleScrollIntoView}>
           <div className={isInsideTable ? "" : "pt-3"}>{children}</div>
         </Collapse>
       </div>
     );
   }
 
+  if (type === "list") {
+    return (
+      <div className="border rounded mb-2" ref={containerRef}>
+        <CollapseHeaderButton
+          open={open}
+          onToggle={onToggle}
+          className="w-100 d-flex align-items-center border-0"
+        >
+          <div className="d-flex align-items-center gap-2">
+            <CollapseCaret open={open} />
+            <span className="fw-semibold">{title}</span>
+          </div>
+
+          <div className="ms-auto d-flex align-items-start gap-3">
+            {rightContent}
+
+            {containerStatus && (
+              <ContainerStatus state={parseContainerState(containerStatus)} />
+            )}
+          </div>
+        </CollapseHeaderButton>
+
+        <Collapse in={open} onEntered={handleScrollIntoView}>
+          <div className="px-3 py-2 border-top">{children}</div>
+        </Collapse>
+      </div>
+    );
+  }
+
   return (
-    <Card className={`shadow-sm ${isParent ? "mb-3" : "mb-2"}`}>
+    <Card
+      className={`shadow-sm ${isParent ? "mb-3" : "mb-2"}`}
+      ref={containerRef}
+    >
       <Card.Header className="p-0">
         <CollapseHeaderButton
           open={open}
@@ -173,7 +214,7 @@ const CollapseItem = ({
         >
           <span>{title}</span>
 
-          <span className="ms-auto d-inline-flex gap-2 align-items-center">
+          <span className="ms-auto d-inline-flex gap-2 align-items-start">
             {containerStatus && (
               <ContainerStatus state={parseContainerState(containerStatus)} />
             )}
@@ -182,7 +223,7 @@ const CollapseItem = ({
         </CollapseHeaderButton>
       </Card.Header>
 
-      <Collapse in={open}>
+      <Collapse in={open} onEntered={handleScrollIntoView}>
         <div className={`border-top ${isParent ? "p-3" : "p-2"}`}>
           {children}
         </div>

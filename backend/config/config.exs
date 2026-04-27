@@ -93,6 +93,12 @@ config :edgehog, EdgehogWeb.Endpoint,
   pubsub_server: Edgehog.PubSub,
   live_view: [signing_salt: "aiSLZVyY"]
 
+config :edgehog, Oban,
+  engine: Oban.Engines.Basic,
+  notifier: Oban.Notifiers.Postgres,
+  queues: [default: 10],
+  repo: Edgehog.Repo
+
 config :edgehog, :ash_domains, [
   Edgehog.Astarte,
   Edgehog.Actors,

@@ -50,6 +50,8 @@ defmodule Edgehog.Application do
       Edgehog.Repo,
       # Start the Telemetry supervisor
       EdgehogWeb.Telemetry,
+      # Start the Oban supervisor
+      {Oban, Application.fetch_env!(:edgehog, Oban)},
       # Start the PubSub system
       {Phoenix.PubSub, name: Edgehog.PubSub},
       # Ash GraphQL subscription batcher

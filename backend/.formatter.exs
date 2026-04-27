@@ -3,6 +3,7 @@
 
 [
   import_deps: [
+    :oban,
     :ash,
     :ash_graphql,
     :ash_json_api,

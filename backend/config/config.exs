@@ -96,7 +96,7 @@ config :edgehog, EdgehogWeb.Endpoint,
 config :edgehog, Oban,
   engine: Oban.Engines.Basic,
   notifier: Oban.Notifiers.Postgres,
-  queues: [default: 10],
+  queues: [campaigns: [limit: 50]],
   repo: Edgehog.Repo
 
 config :edgehog, :ash_domains, [

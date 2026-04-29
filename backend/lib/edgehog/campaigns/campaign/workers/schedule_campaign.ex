@@ -1,7 +1,7 @@
 #
 # This file is part of Edgehog.
 #
-# Copyright 2025 - 2026 SECO Mind Srl
+# Copyright 2026 SECO Mind Srl
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,17 +18,21 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-defmodule Edgehog.Campaigns.Status do
-  @moduledoc false
-  use Ash.Type.Enum,
-    values: [
-      idle: "The campaign has been created but is not being rolled-out yet.",
-      scheduled: "The campaign has been scheduled to start at a future time.",
-      in_progress: "The campaign is being rolled-out.",
-      pausing: "The campaign rollout is being paused.",
-      paused: "The campaign rollout is temporarily suspended.",
-      finished: "The campaign has finished."
-    ]
+defmodule Edgehog.Campaigns.Campaign.Workers.ScheduleCampaign do
+  @moduledoc """
+  This module is used to start Campaigns that have been scheduled at a specific time
+  """
+  use Oban.Worker, queue: :campaigns
 
-  def graphql_type(_), do: :campaign_status
+  alias Edgehog.Campaigns
+  alias Edgehog.Campaigns.ExecutorSupervisor
+
+  @impl Oban.Worker
+  def perform(%Oban.Job{args: %{"id" => id, "tenant" => tenant} = _args}) do
+    with {:ok, campaign} <- Campaigns.fetch_campaign(id, tenant: tenant) do
+      _pid = ExecutorSupervisor.start_executor!(campaign)
+
+      {:ok, campaign}
+    end
+  end
 end

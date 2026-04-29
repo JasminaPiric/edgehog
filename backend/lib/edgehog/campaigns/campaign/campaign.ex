@@ -115,7 +115,7 @@ defmodule Edgehog.Campaigns.Campaign do
       description "Creates a new campaign."
       primary? true
 
-      accept [:name, :campaign_mechanism]
+      accept [:name, :campaign_mechanism, :scheduled_at_timestamp]
 
       argument :channel_id, :id do
         description """
@@ -216,6 +216,13 @@ defmodule Edgehog.Campaigns.Campaign do
 
       public? true
       allow_nil? false
+    end
+
+    attribute :scheduled_at_timestamp, :utc_datetime_usec do
+      description "The timestamp at which the campaign is scheduled to start. Defaults to the current timestamp if not provided."
+      public? true
+
+      default &DateTime.utc_now/0
     end
 
     attribute :start_timestamp, :utc_datetime_usec

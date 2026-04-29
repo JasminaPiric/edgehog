@@ -31,9 +31,9 @@ defmodule Edgehog.Campaigns.Campaign.Changes.ComputeCampaignTargets do
   use Ash.Resource.Change
 
   alias Edgehog.BaseImages.BaseImage
+  alias Edgehog.Campaigns.Campaign.Workers.ScheduleCampaign
   alias Edgehog.Campaigns.CampaignTarget
   alias Edgehog.Campaigns.Channel
-  alias Edgehog.Campaigns.ExecutorSupervisor
   alias Edgehog.Containers.Release
 
   @deployment_mechanisms [
@@ -98,14 +98,33 @@ defmodule Edgehog.Campaigns.Campaign.Changes.ComputeCampaignTargets do
   end
 
   defp apply_targets(changeset, target_devices, tenant) do
+    scheduled_at = Ash.Changeset.get_attribute(changeset, :scheduled_at_timestamp)
+    now = DateTime.utc_now()
+    status = campaign_start_status(scheduled_at, now)
+
     changeset
-    |> Ash.Changeset.change_attribute(:status, :idle)
+    |> Ash.Changeset.change_attribute(:status, status)
     |> Ash.Changeset.after_action(fn _changeset, campaign ->
       create_campaign_targets(tenant, campaign, target_devices)
     end)
     |> Ash.Changeset.after_transaction(fn _changeset, result ->
-      start_campaign_executor(result)
+      case result do
+        {:ok, campaign} ->
+          maybe_schedule_campaign_start(campaign)
+
+        _ ->
+          result
+      end
     end)
+  end
+
+  defp campaign_start_status(nil, _now), do: :idle
+
+  defp campaign_start_status(scheduled_at, now) do
+    case DateTime.compare(scheduled_at, now) do
+      :gt -> :scheduled
+      _other -> :idle
+    end
   end
 
   defp fetch_base_image(changeset, campaign_mechanism, tenant) do
@@ -169,11 +188,17 @@ defmodule Edgehog.Campaigns.Campaign.Changes.ComputeCampaignTargets do
     Enum.any?(device.application_deployments, &(&1.release_id == release.id))
   end
 
-  defp start_campaign_executor({:ok, campaign} = _transaction_result) do
-    _pid = ExecutorSupervisor.start_executor!(campaign)
+  defp maybe_schedule_campaign_start(campaign) do
+    %{id: id, scheduled_at_timestamp: scheduled_at, tenant_id: tenant_id} = campaign
 
-    {:ok, campaign}
+    result =
+      %{id: id, tenant: tenant_id}
+      |> ScheduleCampaign.new(scheduled_at: scheduled_at)
+      |> Oban.insert()
+
+    case result do
+      {:ok, _job} -> {:ok, campaign}
+      {:error, reason} -> {:error, reason}
+    end
   end
-
-  defp start_campaign_executor(transaction_result), do: transaction_result
 end

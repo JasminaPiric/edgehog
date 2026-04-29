@@ -101,6 +101,11 @@ defmodule Edgehog.Campaigns.Executors.Lazy.LazyBatch do
       }
 
       case campaign_status do
+        :scheduled ->
+          # Scheduled campaign, mark it as in_progress and start it
+          _ = MechanismCore.mark_campaign_in_progress!(mechanism, campaign)
+          {:keep_state, data, internal_event(:start_campaign)}
+
         :idle ->
           # Fresh campaign, mark it as in_progress and start it
           _ = MechanismCore.mark_campaign_in_progress!(mechanism, campaign)

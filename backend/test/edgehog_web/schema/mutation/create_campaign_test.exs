@@ -21,6 +21,8 @@
 defmodule EdgehogWeb.Schema.Mutation.CreateCampaignTest do
   use EdgehogWeb.GraphqlCase, async: true
 
+  use Oban.Testing, repo: Edgehog.Repo
+
   import Edgehog.BaseImagesFixtures
   import Edgehog.CampaignsFixtures
   import Edgehog.ContainersFixtures
@@ -28,6 +30,7 @@ defmodule EdgehogWeb.Schema.Mutation.CreateCampaignTest do
   import Edgehog.GroupsFixtures
 
   alias Edgehog.Campaigns.Campaign
+  alias Edgehog.Campaigns.Campaign.Workers.ScheduleCampaign
   alias Edgehog.Campaigns.ExecutorRegistry
 
   describe "createCampaign mutation" do
@@ -770,12 +773,22 @@ defmodule EdgehogWeb.Schema.Mutation.CreateCampaignTest do
 
   defp assert_campaign_executor_started(tenant, campaign_data, mechanism_type) do
     campaign = fetch_campaign_from_graphql_id!(tenant, campaign_data["id"])
+
+    job_args = %{"id" => campaign.id, "tenant" => tenant.tenant_id}
+
+    assert_enqueued worker: ScheduleCampaign, args: job_args, queue: :campaigns
+
+    assert {:ok, campaign} = perform_job(ScheduleCampaign, job_args)
+
     assert {:ok, pid} = fetch_campaign_executor_pid(tenant, campaign, mechanism_type)
     assert {:wait_for_start_execution, _data} = :sys.get_state(pid)
   end
 
   defp assert_campaign_executor_not_started(tenant, campaign_data, mechanism_type) do
     campaign = fetch_campaign_from_graphql_id!(tenant, campaign_data["id"])
+
+    refute_enqueued worker: ScheduleCampaign
+
     assert :error = fetch_campaign_executor_pid(tenant, campaign, mechanism_type)
   end
 

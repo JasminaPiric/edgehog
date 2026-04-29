@@ -1,5 +1,5 @@
 <!---
-  Copyright 2023 SECO Mind Srl
+  Copyright 2023-2026 SECO Mind Srl
 
   SPDX-License-Identifier: Apache-2.0
 -->
@@ -36,13 +36,13 @@ When creating an Update Campaign, the following information must be provided
 
 - Base Image: the target Base Image for the Update Campaign.
 - Channel: the target Channel for the Update Campaign.
+- Scheduled Time (optional): the time at which the campaign should start executing. If not provided, the campaign will start immediately upon creation.
 - [Roll-out Mechanism](#roll-out-mechanism) properties.
 
 The Update Campaign information can be provided using the form, and pressing the "Create" button saves
 the Update Campaign.
 
-Once created, the Update Campaign will start rolling out updates towards the devices, and its
-progress can be checked from the Edgehog Dashboard or through Edgehog GraphQL API.
+Once created, the Update Campaign will begin rolling out updates towards the devices at the scheduled time (or immediately if no scheduled time is provided). Its progress can be checked from the Edgehog Dashboard or through Edgehog GraphQL API.
 
 Note that the campaign will "snapshot" the Devices belonging to the Channel when it's
 started, and will target only those. If additional Devices are added to the Channel (either

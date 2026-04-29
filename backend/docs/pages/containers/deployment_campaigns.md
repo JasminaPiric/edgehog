@@ -1,5 +1,5 @@
 <!---
-  Copyright 2025 SECO Mind Srl
+  Copyright 2025-2026 SECO Mind Srl
 
   SPDX-License-Identifier: Apache-2.0
 -->
@@ -34,11 +34,12 @@ When creating a Deployment Campaign, the following information must be provided:
 - **Release**: The target release to deploy or operate on.
 - **Target Release** (`upgrade` only): The new release version to upgrade to.
 - **Channel**: The target Channel for the Deployment Campaign. All devices in this channel will be targeted.
+- **Scheduled Time** (optional): The time at which the campaign should start executing. If not provided, the campaign will start immediately upon creation.
 - **[Deployment Mechanism](#deployment-mechanism)** properties.
 
 The Deployment Campaign information can be provided using the form, and pressing the "Create" button saves the Deployment Campaign.
 
-Once created, the Deployment Campaign will start executing operations towards the devices, and its progress can be checked from the Edgehog Dashboard or through Edgehog GraphQL API.
+Once created, the Deployment Campaign will begin executing operations towards the devices at the scheduled time (or immediately if no scheduled time is provided). Its progress can be checked from the Edgehog Dashboard or through Edgehog GraphQL API.
 
 Note that the campaign will "snapshot" the Devices belonging to the Channel when it's started, and will target only those. If additional Devices are added to the Channel _after_ the Deployment Campaign is created, they won't be included in this campaign and will require a separate campaign to be started.
 

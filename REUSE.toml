@@ -6,7 +6,7 @@ SPDX-PackageDownloadLocation = "https://github.com/edgehog-device-manager/edgeho
 [[annotations]]
 path = "backend/docs/images/**"
 precedence = "aggregate"
-SPDX-FileCopyrightText = "2021-2023 SECO Mind Srl"
+SPDX-FileCopyrightText = "2021-2026 SECO Mind Srl"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]

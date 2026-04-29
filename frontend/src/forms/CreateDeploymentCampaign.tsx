@@ -49,6 +49,7 @@ import {
   deploymentCampaignSchema,
   DeploymentCampaignFormData,
 } from "@/forms/validation";
+import DatePicker from "@/components/DatePicker";
 
 const CAMPAIGN_APPLICATION_OPTIONS_FRAGMENT = graphql`
   fragment CreateDeploymentCampaign_ApplicationOptionsFragment on RootQueryType
@@ -106,6 +107,7 @@ type ChannelRecord = NonNullable<
 type DeploymentCampaignData = {
   channelId: string;
   name: string;
+  scheduledAtTimestamp?: string;
   campaignMechanism: CampaignMechanismInput;
 };
 
@@ -133,6 +135,7 @@ const OPERATION_TO_MECHANISM: Record<OperationType, DeploymentAction> = {
 
 const initialData: DeploymentCampaignFormData = {
   name: "",
+  scheduledAtTimestamp: "",
   channel: { id: "", name: "" },
   application: { id: "", name: "" },
   release: { id: "", version: "" },
@@ -148,6 +151,7 @@ const transformOutputData = (
 ): DeploymentCampaignData => {
   const {
     name,
+    scheduledAtTimestamp,
     channel,
     release,
     targetRelease,
@@ -172,6 +176,11 @@ const transformOutputData = (
   return {
     name,
     channelId: channel.id,
+    ...(scheduledAtTimestamp
+      ? {
+          scheduledAtTimestamp: new Date(scheduledAtTimestamp).toISOString(),
+        }
+      : {}),
     campaignMechanism: {
       [mechanismKey]: deploymentConfig,
     },
@@ -400,6 +409,40 @@ const CreateDeploymentCampaignForm = ({
         >
           <Form.Control {...register("name")} isInvalid={!!errors.name} />
           <FormFeedback feedback={errors.name?.message} />
+        </FormRow>
+
+        <FormRow
+          id="create-deployment-campaign-form-scheduled-at-timestamp"
+          label={
+            <FormattedMessage
+              id="forms.CreateDeploymentCampaign.scheduledAtTimestampLabel"
+              defaultMessage="Scheduled At"
+            />
+          }
+        >
+          <Controller
+            name="scheduledAtTimestamp"
+            control={control}
+            render={({ field: { value, onChange } }) => (
+              <DatePicker
+                selected={value ? new Date(value) : null}
+                onChange={(date: Date | null) =>
+                  onChange(date ? date.toISOString() : "")
+                }
+                minDate={new Date()}
+              />
+            )}
+          />
+          {errors.scheduledAtTimestamp ? (
+            <FormFeedback feedback={errors.scheduledAtTimestamp.message} />
+          ) : (
+            <Form.Text muted>
+              <FormattedMessage
+                id="forms.CreateDeploymentCampaign.scheduledAtTimestampLabelHint"
+                defaultMessage="Optional. If set, the campaign will be scheduled to start at the specified date and time. Otherwise, it will start immediately."
+              />
+            </Form.Text>
+          )}
         </FormRow>
 
         <FormRow

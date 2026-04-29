@@ -20,8 +20,9 @@
 
 import type { ReactNode } from "react";
 import { Suspense, useCallback, useEffect, useState } from "react";
+import Countdown, { type CountdownRenderProps } from "react-countdown";
 import { ErrorBoundary } from "react-error-boundary";
-import { FormattedMessage } from "react-intl";
+import { FormattedDate, FormattedMessage } from "react-intl";
 import type { PreloadedQuery } from "react-relay/hooks";
 import {
   ConnectionHandler,
@@ -65,6 +66,7 @@ const GET_CAMPAIGN_QUERY = graphql`
     campaign(id: $fileDownloadCampaignId) {
       name
       status
+      scheduledAtTimestamp
       ...FileDownloadCampaignForm_CampaignFragment
       ...CampaignStatsChart_CampaignStatsChartFragment
       ...FileDownloadTargetsTabs_FileDownloadTargetsFragment
@@ -108,6 +110,7 @@ const CAMPAIGN_UPDATE_SUBSCRIPTION = graphql`
         id
         status
         outcome
+        scheduledAtTimestamp
         idleTargetCount
         inProgressTargetCount
         failedTargetCount
@@ -137,6 +140,35 @@ const CAMPAIGN_UPDATE_SUBSCRIPTION = graphql`
     }
   }
 `;
+
+const renderCountdown = ({
+  completed,
+  days,
+  hours,
+  minutes,
+  seconds,
+}: CountdownRenderProps) => {
+  if (completed) {
+    return null;
+  }
+
+  const duration = [
+    days > 0 ? `${days}d` : null,
+    hours > 0 || days > 0 ? `${hours}h` : null,
+    minutes > 0 || hours > 0 || days > 0 ? `${minutes}m` : null,
+    `${seconds}s`,
+  ].filter(Boolean);
+
+  return (
+    <strong>
+      <FormattedMessage
+        id="pages.FileDownloadCampaign.scheduledStartsIn"
+        defaultMessage="Starts in {duration}"
+        values={{ duration: duration.join(" ") }}
+      />
+    </strong>
+  );
+};
 
 type CampaignActionsProps = {
   fileDownloadCampaignId: string;
@@ -261,6 +293,9 @@ type FileDownloadCampaignContentProps = {
   getCampaignQuery: PreloadedQuery<FileDownloadCampaign_getCampaign_Query>;
 };
 
+// TODO: There is a lot of duplicate code between all the campaign pages,
+// consider refactoring to extract common components and logic
+
 const FileDownloadCampaignContent = ({
   fileDownloadCampaignId,
   getCampaignQuery,
@@ -268,6 +303,25 @@ const FileDownloadCampaignContent = ({
   const [errorFeedback, setErrorFeedback] = useState<ReactNode>(null);
 
   const { campaign } = usePreloadedQuery(GET_CAMPAIGN_QUERY, getCampaignQuery);
+
+  const scheduledDate = campaign?.scheduledAtTimestamp
+    ? new Date(campaign.scheduledAtTimestamp)
+    : null;
+
+  const isValidScheduledDate =
+    scheduledDate && !Number.isNaN(scheduledDate.getTime());
+
+  const [now] = useState(() => Date.now());
+
+  const shouldShowScheduledAlert =
+    !!campaign?.scheduledAtTimestamp &&
+    (!isValidScheduledDate || scheduledDate.getTime() > now);
+
+  const formattedScheduledDate = isValidScheduledDate ? (
+    <FormattedDate value={scheduledDate} dateStyle="medium" timeStyle="short" />
+  ) : (
+    campaign?.scheduledAtTimestamp
+  );
 
   useSubscription({
     subscription: CAMPAIGN_UPDATE_SUBSCRIPTION,
@@ -367,6 +421,27 @@ const FileDownloadCampaignContent = ({
           dismissible
         >
           {errorFeedback}
+        </Alert>
+
+        <Alert show={shouldShowScheduledAlert} variant="warning">
+          <div>
+            <strong>
+              <FormattedMessage
+                id="pages.FileDownloadCampaign.scheduledFor"
+                defaultMessage="Scheduled for: {scheduledDate}"
+                values={{ scheduledDate: formattedScheduledDate }}
+              />
+            </strong>
+          </div>
+          {isValidScheduledDate && (
+            <div>
+              <Countdown
+                date={scheduledDate.getTime()}
+                overtime
+                renderer={renderCountdown}
+              />
+            </div>
+          )}
         </Alert>
 
         <Row>

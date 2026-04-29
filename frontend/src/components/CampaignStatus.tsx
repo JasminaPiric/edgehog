@@ -36,6 +36,7 @@ const CAMPAIGN_STATUS_FRAGMENT = graphql`
 
 const colors: Record<CampaignStatusEnum, string> = {
   IDLE: "text-muted",
+  SCHEDULED: "text-warning",
   IN_PROGRESS: "text-warning",
   PAUSING: "text-warning",
   PAUSED: "text-warning",
@@ -46,6 +47,10 @@ const messages = defineMessages<CampaignStatusEnum>({
   IDLE: {
     id: "components.CampaignStatus.Idle",
     defaultMessage: "Idle",
+  },
+  SCHEDULED: {
+    id: "components.CampaignStatus.Scheduled",
+    defaultMessage: "Scheduled",
   },
   IN_PROGRESS: {
     id: "components.CampaignStatus.InProgress",
@@ -74,7 +79,10 @@ const CampaignStatus = ({ campaignRef }: Props) => {
 
   // Determine icon type and animation based on status
   const isPausing = status === "PAUSING";
-  const iconName = isPausing ? "spinner" : "circle";
+
+  const iconName =
+    status === "SCHEDULED" ? "circleEmpty" : isPausing ? "spinner" : "circle";
+
   const animationClass = isPausing ? "fa-spin" : "";
 
   return (

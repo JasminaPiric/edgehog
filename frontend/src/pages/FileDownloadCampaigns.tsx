@@ -78,6 +78,7 @@ const CAMPAIGN_UPDATED_SUBSCRIPTION = graphql`
         id
         status
         outcome
+        scheduledAtTimestamp
       }
     }
   }
@@ -91,6 +92,7 @@ const CAMPAIGN_CREATED_SUBSCRIPTION = graphql`
         name
         status
         outcome
+        scheduledAtTimestamp
         channel {
           id
           name

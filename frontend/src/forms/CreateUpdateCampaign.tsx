@@ -36,6 +36,7 @@ import type { CreateUpdateCampaign_ChannelPaginationQuery } from "@/api/__genera
 
 import BaseImageSelect from "@/components/BaseImageSelect";
 import Button from "@/components/Button";
+import DatePicker from "@/components/DatePicker";
 import Form from "@/components/Form";
 import Spinner from "@/components/Spinner";
 import Stack from "@/components/Stack";
@@ -94,6 +95,7 @@ type ChannelRecord = NonNullable<
 type UpdateCampaignOutputData = {
   channelId: string;
   name: string;
+  scheduledAtTimestamp?: string;
   campaignMechanism: {
     firmwareUpgrade: {
       baseImageId: string;
@@ -108,6 +110,7 @@ type UpdateCampaignOutputData = {
 
 const initialData: UpdateCampaignFormData = {
   name: "",
+  scheduledAtTimestamp: "",
   operationType: "FirmwareUpgrade",
   channel: { id: "", name: "" },
   baseImageCollection: { id: "", name: "" },
@@ -124,6 +127,7 @@ const transformOutputData = (
 ): UpdateCampaignOutputData => {
   const {
     name,
+    scheduledAtTimestamp,
     baseImage,
     channel,
     maxFailurePercentage,
@@ -136,6 +140,11 @@ const transformOutputData = (
   return {
     name,
     channelId: channel.id,
+    ...(scheduledAtTimestamp
+      ? {
+          scheduledAtTimestamp: new Date(scheduledAtTimestamp).toISOString(),
+        }
+      : {}),
     campaignMechanism: {
       firmwareUpgrade: {
         baseImageId: baseImage.id,
@@ -326,6 +335,41 @@ const CreateUpdateCampaignForm = ({
           <Form.Control {...register("name")} isInvalid={!!errors.name} />
           <FormFeedback feedback={errors.name?.message} />
         </FormRow>
+
+        <FormRow
+          id="create-update-campaign-form-scheduled-at-timestamp"
+          label={
+            <FormattedMessage
+              id="forms.CreateUpdateCampaign.scheduledAtTimestampLabel"
+              defaultMessage="Scheduled At"
+            />
+          }
+        >
+          <Controller
+            name="scheduledAtTimestamp"
+            control={control}
+            render={({ field: { value, onChange } }) => (
+              <DatePicker
+                selected={value ? new Date(value) : null}
+                onChange={(date: Date | null) =>
+                  onChange(date ? date.toISOString() : "")
+                }
+                minDate={new Date()}
+              />
+            )}
+          />
+          {errors.scheduledAtTimestamp ? (
+            <FormFeedback feedback={errors.scheduledAtTimestamp.message} />
+          ) : (
+            <Form.Text muted>
+              <FormattedMessage
+                id="forms.CreateUpdateCampaign.scheduledAtTimestampLabelHint"
+                defaultMessage="Optional. If set, the campaign will be scheduled to start at the specified date and time. Otherwise, it will start immediately."
+              />
+            </Form.Text>
+          )}
+        </FormRow>
+
         <FormRow
           id="create-update-campaign-form-base-image-collection"
           label={

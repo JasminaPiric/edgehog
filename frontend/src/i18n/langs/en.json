@@ -154,6 +154,9 @@
   "components.CampaignStatus.Pausing": {
     "defaultMessage": "Pausing"
   },
+  "components.CampaignStatus.Scheduled": {
+    "defaultMessage": "Scheduled"
+  },
   "components.CellularConnectionTabs.Modem.APN": {
     "defaultMessage": "APN"
   },
@@ -2013,6 +2016,12 @@
   "forms.CreateDeploymentCampaign.requestTimeoutSecondsLabel": {
     "defaultMessage": "Request Timeout <muted>(seconds)</muted>"
   },
+  "forms.CreateDeploymentCampaign.scheduledAtTimestampLabel": {
+    "defaultMessage": "Scheduled At"
+  },
+  "forms.CreateDeploymentCampaign.scheduledAtTimestampLabelHint": {
+    "defaultMessage": "Optional. If set, the campaign will be scheduled to start at the specified date and time. Otherwise, it will start immediately."
+  },
   "forms.CreateDeploymentCampaign.selectApplication": {
     "defaultMessage": "Select an application..."
   },
@@ -2114,6 +2123,12 @@
   },
   "forms.CreateFileDownloadCampaign.requestTimeoutSecondsLabel": {
     "defaultMessage": "Request Timeout <muted>(seconds)</muted>"
+  },
+  "forms.CreateFileDownloadCampaign.scheduledAtTimestampLabel": {
+    "defaultMessage": "Scheduled At"
+  },
+  "forms.CreateFileDownloadCampaign.scheduledAtTimestampLabelHint": {
+    "defaultMessage": "Optional. If set, the campaign will be scheduled to start at the specified date and time. Otherwise, it will start immediately."
   },
   "forms.CreateFileDownloadCampaign.selectRepositoryHint": {
     "defaultMessage": "Select a repository before selecting a file..."
@@ -2315,6 +2330,12 @@
   },
   "forms.CreateUpdateCampaign.requestTimeoutSecondsLabel": {
     "defaultMessage": "Request Timeout <muted>(seconds)</muted>"
+  },
+  "forms.CreateUpdateCampaign.scheduledAtTimestampLabel": {
+    "defaultMessage": "Scheduled At"
+  },
+  "forms.CreateUpdateCampaign.scheduledAtTimestampLabelHint": {
+    "defaultMessage": "Optional. If set, the campaign will be scheduled to start at the specified date and time. Otherwise, it will start immediately."
   },
   "forms.CreateUpdateCampaign.selectBaseImageCollection": {
     "defaultMessage": "Select a base image collection..."
@@ -3154,6 +3175,12 @@
   "pages.DeploymentCampaign.resumeErrorFeedback": {
     "defaultMessage": "Could not resume the campaign, please try again."
   },
+  "pages.DeploymentCampaign.scheduledFor": {
+    "defaultMessage": "Scheduled for: {scheduledDate}"
+  },
+  "pages.DeploymentCampaign.scheduledStartsIn": {
+    "defaultMessage": "Starts in {duration}"
+  },
   "pages.DeploymentCampaignCreate.creationErrorFeedback": {
     "defaultMessage": "Could not create the Deployment Campaign, please try again."
   },
@@ -3304,6 +3331,12 @@
   },
   "pages.FileDownloadCampaign.resumeErrorFeedback": {
     "defaultMessage": "Could not resume the campaign, please try again."
+  },
+  "pages.FileDownloadCampaign.scheduledFor": {
+    "defaultMessage": "Scheduled for: {scheduledDate}"
+  },
+  "pages.FileDownloadCampaign.scheduledStartsIn": {
+    "defaultMessage": "Starts in {duration}"
   },
   "pages.FileDownloadCampaignCreate.creationErrorFeedback": {
     "defaultMessage": "Could not create the File Download Campaign, please try again."
@@ -3589,6 +3622,12 @@
   },
   "pages.UpdateCampaign.resumeErrorFeedback": {
     "defaultMessage": "Could not resume the campaign, please try again."
+  },
+  "pages.UpdateCampaign.scheduledFor": {
+    "defaultMessage": "Scheduled for: {scheduledDate}"
+  },
+  "pages.UpdateCampaign.scheduledStartsIn": {
+    "defaultMessage": "Starts in {duration}"
   },
   "pages.UpdateCampaign.updateCampaignNotFound.message": {
     "defaultMessage": "Return to the Update Campaign list."

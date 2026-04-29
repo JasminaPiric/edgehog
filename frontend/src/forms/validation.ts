@@ -677,6 +677,7 @@ type ManualFileUploadRequestData = z.infer<typeof fileUploadRequestFormSchema>;
 const deploymentCampaignSchema = z
   .object({
     name: z.string().min(1),
+    scheduledAtTimestamp: z.string().optional(),
     application: z.object({
       id: z.string().min(1),
       name: z.string().min(1),
@@ -715,6 +716,7 @@ type DeploymentCampaignFormData = z.infer<typeof deploymentCampaignSchema>;
 
 const updateCampaignSchema = z.object({
   name: z.string().min(1),
+  scheduledAtTimestamp: z.string().optional(),
   baseImageCollection: baseImageCollectionForBaseImageSelectSchema,
   baseImage: baseImageSelectSchema.partial({ url: true }),
   channel: z.object({
@@ -734,6 +736,7 @@ type UpdateCampaignFormData = z.infer<typeof updateCampaignSchema>;
 const fileDownloadCampaignSchema = z
   .object({
     name: z.string().min(1),
+    scheduledAtTimestamp: z.string().optional(),
     channel: z.object({
       id: z.string().min(1),
       name: z.string().min(1),

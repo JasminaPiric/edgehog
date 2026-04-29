@@ -64,6 +64,7 @@ const CAMPAIGNS_FRAGMENT = graphql`
       edges {
         node {
           __typename
+          scheduledAtTimestamp
         }
       }
       ...DeploymentCampaignsTable_CampaignEdgeFragment
@@ -91,6 +92,7 @@ const CAMPAIGN_CREATED_SUBSCRIPTION = graphql`
         name
         status
         outcome
+        scheduledAtTimestamp
         channel {
           id
           name

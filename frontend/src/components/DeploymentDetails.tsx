@@ -567,6 +567,7 @@ const DeploymentDetails = ({
   const upgradeReleaseOptions: SelectOption[] = useMemo(() => {
     const releaseEdges = deploymentRef?.release?.application?.releases?.edges;
     const currentVersion = deploymentRef?.release?.version;
+    const systemModelName = deploymentRef?.device?.systemModel?.name;
 
     if (!releaseEdges || !currentVersion) {
       return [];
@@ -588,14 +589,36 @@ const DeploymentDetails = ({
 
         return semver.gt(parsedTargetVersion, parsedCurrentVersion);
       })
-      .map((release) => ({
-        value: release.id,
-        label: release.version,
-        disabled: false,
-      }));
+      .map((release) => {
+        const systemModelNames =
+          release.systemModels?.map((sm) => sm.name) ?? [];
+
+        const appliesToAll = systemModelNames.length === 0;
+
+        const matchesSystemModel =
+          systemModelName && systemModelNames.includes(systemModelName);
+
+        const label = !matchesSystemModel
+          ? intl.formatMessage(
+              {
+                id: "components.DeploymentDetails.incompatibleVersion",
+                defaultMessage: "{version} (Incompatible system model)",
+              },
+              { version: release.version },
+            )
+          : release.version;
+
+        return {
+          value: release.id,
+          label: label,
+          disabled: !(appliesToAll || matchesSystemModel),
+        };
+      });
   }, [
     deploymentRef?.release?.application?.releases?.edges,
     deploymentRef?.release?.version,
+    deploymentRef?.device?.systemModel?.name,
+    intl,
   ]);
 
   const selectedUpgradeReleaseOption = useMemo(() => {

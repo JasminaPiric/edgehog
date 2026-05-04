@@ -488,6 +488,9 @@
   "components.DeploymentDetails.deviceMappings": {
     "defaultMessage": "Device Mappings"
   },
+  "components.DeploymentDetails.incompatibleVersion": {
+    "defaultMessage": "{version} (Incompatible system model)"
+  },
   "components.DeploymentDetails.networks": {
     "defaultMessage": "Networks"
   },

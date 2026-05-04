@@ -59,6 +59,10 @@ const GET_DEPLOYMENT_QUERY = graphql`
       device {
         name
         online
+        systemModel {
+          id
+          name
+        }
       }
       release {
         id

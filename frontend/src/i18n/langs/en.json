@@ -2054,6 +2054,9 @@
     "defaultMessage": "State",
     "description": "Title for the State column of the device volumes table"
   },
+  "components.fleet.devices.volumes-table.VolumesTable.volumeInUseTooltip": {
+    "defaultMessage": "This volume cannot be deleted because it is attached to a container."
+  },
   "components.fleet.devices.wifi-scan-results-table.WiFiScanResultsTable.apChannelTitle": {
     "defaultMessage": "Channel"
   },

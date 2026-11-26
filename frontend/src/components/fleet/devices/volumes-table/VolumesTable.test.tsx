@@ -50,7 +50,10 @@ const ComponentWithQuery = () => {
   );
 };
 
-const renderComponent = (volumeDeploymentsEdges: unknown[]) => {
+const renderComponent = (
+  volumeDeploymentsEdges: unknown[],
+  deviceOverrides: Record<string, unknown> = {},
+) => {
   const relayEnvironment = createMockEnvironment();
 
   renderWithProviders(<ComponentWithQuery />, { relayEnvironment });
@@ -63,9 +66,11 @@ const renderComponent = (volumeDeploymentsEdges: unknown[]) => {
       data: {
         device: {
           id: "device-1",
+          online: true,
           volumeDeployments: {
             edges: volumeDeploymentsEdges,
           },
+          ...deviceOverrides,
         },
       },
     });
@@ -123,4 +128,103 @@ it("renders volumes with label, driver, mountpoints, and state", async () => {
   expect(screen.getByText("/var/lib/app")).toBeVisible();
 
   expect(screen.getByText("available")).toBeVisible();
+});
+
+it("disables delete button with tooltip when volume is attached to a container", async () => {
+  renderComponent([
+    {
+      node: {
+        id: "vol-dep-1",
+        state: "available",
+        isReady: true,
+        volume: {
+          id: "vol-1",
+          label: "attached-volume",
+          driver: "local",
+          containerVolumes: {
+            edges: [
+              {
+                node: {
+                  id: "cv-1",
+                  target: "/data",
+                  container: {
+                    id: "cnt-1",
+                    name: "backend-service",
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+    },
+  ]);
+
+  const deleteButton = await screen.findByRole("button", {
+    name: "This volume cannot be deleted because it is attached to a container.",
+  });
+  expect(deleteButton).toBeDisabled();
+  expect(
+    await screen.findByTitle(
+      "This volume cannot be deleted because it is attached to a container.",
+    ),
+  ).toBeVisible();
+});
+
+it("enables delete button when volume is not attached to any container and device is online", async () => {
+  renderComponent([
+    {
+      node: {
+        id: "vol-dep-1",
+        state: "available",
+        isReady: true,
+        volume: {
+          id: "vol-1",
+          label: "orphan-volume",
+          driver: "local",
+          containerVolumes: {
+            edges: [],
+          },
+        },
+      },
+    },
+  ]);
+
+  const deleteButton = await screen.findByRole("button", {
+    name: "Delete Volume on Device",
+  });
+  expect(deleteButton).toBeEnabled();
+});
+
+it("disables delete button with tooltip when device is offline", async () => {
+  renderComponent(
+    [
+      {
+        node: {
+          id: "vol-dep-1",
+          state: "available",
+          isReady: true,
+          volume: {
+            id: "vol-1",
+            label: "orphan-volume",
+            driver: "local",
+            containerVolumes: {
+              edges: [],
+            },
+          },
+        },
+      },
+    ],
+    { online: false },
+  );
+
+  const deleteButton = await screen.findByRole("button", {
+    name: "The device is offline. You cannot delete volumes while it is disconnected.",
+  });
+  expect(deleteButton).toBeDisabled();
+  expect(
+    await screen.findByTitle(
+      "The device is offline. You cannot delete volumes while it is disconnected.",
+    ),
+  ).toBeVisible();
 });

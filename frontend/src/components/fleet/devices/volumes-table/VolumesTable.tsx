@@ -19,9 +19,14 @@
  */
 
 import compact from "lodash/compact";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { FormattedMessage, useIntl, type IntlShape } from "react-intl";
-import { graphql, useMutation, usePaginationFragment } from "react-relay/hooks";
+import {
+  graphql,
+  useMutation,
+  usePaginationFragment,
+  useSubscription,
+} from "react-relay/hooks";
 
 import type { VolumesTable_PaginationQuery } from "@/api/__generated__/VolumesTable_PaginationQuery.graphql";
 import type {
@@ -29,6 +34,7 @@ import type {
   VolumesTable_volumeDeployments$key,
 } from "@/api/__generated__/VolumesTable_volumeDeployments.graphql";
 import type { VolumesTable_sendVolumeCommand_Mutation } from "@/api/__generated__/VolumesTable_sendVolumeCommand_Mutation.graphql";
+import type { VolumesTable_deploymentsByDevice_Subscription } from "@/api/__generated__/VolumesTable_deploymentsByDevice_Subscription.graphql";
 
 import { Link, Route } from "@/Navigation";
 import ResourceState from "@/components/apps/resource-state/ResourceState";
@@ -91,6 +97,17 @@ const SEND_VOLUME_COMMAND_MUTATION = graphql`
       errors {
         message
       }
+    }
+  }
+`;
+
+const DEPLOYMENTS_BY_DEVICE_SUBSCRIPTION = graphql`
+  subscription VolumesTable_deploymentsByDevice_Subscription($deviceId: ID!) {
+    deploymentsByDevice(deviceId: $deviceId) {
+      updated {
+        id
+      }
+      destroyed
     }
   }
 `;
@@ -214,33 +231,49 @@ const getColumnsDefinition = (
     },
     cell: ({ row }) => {
       const volumeDeployment = row.original;
+      const containerVolumes = compact(
+        volumeDeployment.volume?.containerVolumes?.edges?.map(
+          (edge) => edge?.node,
+        ),
+      );
+      const hasConnectedContainers = containerVolumes.length > 0;
+      const isDeleteDisabled = !isOnline || hasConnectedContainers;
+
+      const deleteTooltip = !isOnline
+        ? intl.formatMessage({
+            id: "components.fleet.devices.volumes-table.VolumesTable.deviceOfflineTooltip",
+            defaultMessage:
+              "The device is offline. You cannot delete volumes while it is disconnected.",
+          })
+        : hasConnectedContainers
+          ? intl.formatMessage({
+              id: "components.fleet.devices.volumes-table.VolumesTable.volumeInUseTooltip",
+              defaultMessage:
+                "This volume cannot be deleted because it is attached to a container.",
+            })
+          : intl.formatMessage({
+              id: "components.fleet.devices.volumes-table.VolumesTable.deleteButtonTitle",
+              defaultMessage: "Delete Volume on Device",
+            });
+
       return (
-        <Button
-          className="btn p-0 border-0 bg-transparent icon-click"
-          disabled={!isOnline}
-          aria-label={intl.formatMessage({
-            id: "components.fleet.devices.volumes-table.VolumesTable.deleteButtonTitle",
-            defaultMessage: "Delete Volume on Device",
-          })}
-          title={
-            !isOnline
-              ? intl.formatMessage({
-                  id: "components.fleet.devices.volumes-table.VolumesTable.deviceOfflineTooltip",
-                  defaultMessage:
-                    "The device is offline. You cannot delete volumes while it is disconnected.",
-                })
-              : intl.formatMessage({
-                  id: "components.fleet.devices.volumes-table.VolumesTable.deleteButtonTitle",
-                  defaultMessage: "Delete Volume on Device",
-                })
-          }
-          onClick={() => onDeleteClick(volumeDeployment)}
+        <span
+          className="d-inline-block"
+          title={deleteTooltip}
+          tabIndex={isDeleteDisabled ? 0 : undefined}
         >
-          <Icon
-            className={isOnline ? "text-danger" : "text-muted"}
-            icon="delete"
-          />
-        </Button>
+          <Button
+            className="btn p-0 border-0 bg-transparent icon-click"
+            disabled={isDeleteDisabled}
+            aria-label={deleteTooltip}
+            onClick={() => onDeleteClick(volumeDeployment)}
+          >
+            <Icon
+              className={isDeleteDisabled ? "text-muted" : "text-danger"}
+              icon="delete"
+            />
+          </Button>
+        </span>
       );
     },
   }),
@@ -253,10 +286,27 @@ type Props = {
 
 const VolumesTable = ({ className, deviceRef }: Props) => {
   const intl = useIntl();
-  const { data } = usePaginationFragment<
+  const { data, refetch } = usePaginationFragment<
     VolumesTable_PaginationQuery,
     VolumesTable_volumeDeployments$key
   >(VOLUMES_TABLE_FRAGMENT, deviceRef);
+
+  useEffect(() => {
+    refetch({}, { fetchPolicy: "network-only" });
+  }, [refetch]);
+
+  useSubscription<VolumesTable_deploymentsByDevice_Subscription>(
+    useMemo(
+      () => ({
+        subscription: DEPLOYMENTS_BY_DEVICE_SUBSCRIPTION,
+        variables: { deviceId: data.id },
+        onNext: () => {
+          refetch({}, { fetchPolicy: "network-only" });
+        },
+      }),
+      [data.id, refetch],
+    ),
+  );
 
   const { online, volumeDeployments } = data;
   const isOnline = Boolean(online);

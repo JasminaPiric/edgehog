@@ -46,6 +46,23 @@ const VOLUME_DEPLOYMENT_UPDATED_SUBSCRIPTION = graphql`
         id
         state
         isReady
+        volume {
+          id
+          label
+          driver
+          containerVolumes {
+            edges {
+              node {
+                id
+                target
+                container {
+                  id
+                  name
+                }
+              }
+            }
+          }
+        }
       }
     }
   }

@@ -29,6 +29,7 @@ defmodule Edgehog.Containers.Volume.Deployment do
   alias Edgehog.Containers.Release.Deployment
   alias Edgehog.Containers.Validations
   alias Edgehog.Containers.Volume
+  alias Edgehog.Containers.Volume.Deployment.Calculations
   alias Edgehog.Containers.Volume.Deployment.Changes
   alias Edgehog.Devices.Device
 
@@ -171,7 +172,7 @@ defmodule Edgehog.Containers.Volume.Deployment do
 
     calculate :dangling?,
               :boolean,
-              {Edgehog.Containers.Calculations.Dangling, [parent: :container_deployments]}
+              Calculations.Dangling
   end
 
   identities do

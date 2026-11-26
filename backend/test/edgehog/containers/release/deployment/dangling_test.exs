@@ -474,4 +474,58 @@ defmodule Edgehog.Containers.DeploymentTest do
     assert cd_v3.image_deployment.image.image_credentials_id !=
              cd_v2.image_deployment.image.image_credentials_id
   end
+
+  test "destroy_and_gc preserves volume deployment if reclaim_policy is Retain, but destroys it if Delete",
+       %{tenant: tenant} do
+    device = device_fixture(tenant: tenant)
+    retain_volume = volume_fixture(tenant: tenant, reclaim_policy: "Retain")
+    delete_volume = volume_fixture(tenant: tenant, reclaim_policy: "Delete")
+
+    container =
+      container_fixture(
+        tenant: tenant,
+        volumes: [
+          %{id: retain_volume.id, target: "/data/retain"},
+          %{id: delete_volume.id, target: "/data/delete"}
+        ]
+      )
+
+    application = application_fixture(tenant: tenant)
+
+    release =
+      release_fixture(
+        tenant: tenant,
+        application_id: application.id,
+        version: "1.0.0",
+        container_ids: [container.id]
+      )
+
+    deployment =
+      [tenant: tenant, device_id: device.id, release_id: release.id]
+      |> deployment_fixture()
+      |> Ash.load!(
+        [container_deployments: [volume_deployments: :volume]],
+        tenant: tenant
+      )
+
+    [cd] = deployment.container_deployments
+    assert length(cd.volume_deployments) == 2
+
+    retain_vd = Enum.find(cd.volume_deployments, &(&1.volume.reclaim_policy == "Retain"))
+    delete_vd = Enum.find(cd.volume_deployments, &(&1.volume.reclaim_policy == "Delete"))
+
+    assert retain_vd != nil
+    assert delete_vd != nil
+
+    # Destroy the deployment and garbage collect
+    deployment
+    |> Ash.Changeset.for_destroy(:destroy_and_gc, %{}, tenant: tenant)
+    |> Ash.destroy!(tenant: tenant)
+
+    # The Retain volume deployment is preserved in the database
+    assert {:ok, _} = Ash.get(Volume.Deployment, retain_vd.id, tenant: tenant)
+
+    # The Delete volume deployment is garbage-collected
+    assert {:error, _} = Ash.get(Volume.Deployment, delete_vd.id, tenant: tenant)
+  end
 end

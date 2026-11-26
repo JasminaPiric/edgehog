@@ -25,6 +25,7 @@ defmodule Edgehog.Containers.Volume do
     extensions: [AshGraphql.Resource]
 
   alias Edgehog.Containers.Validations
+  alias Edgehog.Containers.Volume.Calculations
 
   graphql do
     type :volume
@@ -149,7 +150,7 @@ defmodule Edgehog.Containers.Volume do
 
     calculate :dangling?,
               :boolean,
-              {Edgehog.Containers.Calculations.Dangling, [parent: :containers]}
+              Calculations.Dangling
 
     calculate :hash,
               :string,
